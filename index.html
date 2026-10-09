@@ -1,0 +1,667 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>設置時検査チェックリスト</title>
+<meta name="robots" content="noindex, nofollow, noarchive">
+<meta name="googlebot" content="noindex, nofollow, noarchive">
+<meta name="theme-color" content="#8a5a2b">
+<link rel="icon" href="icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<style>
+  :root {
+    --bg: #f4f2ee;
+    --card: #ffffff;
+    --ink: #222;
+    --muted: #777;
+    --line: #ddd;
+    --accent: #8a5a2b;
+    --ok: #2e7d4f;
+    --ng: #c0392b;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: -apple-system, "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
+    -webkit-text-size-adjust: 100%;
+  }
+  header.bar {
+    position: sticky; top: 0; z-index: 10;
+    background: var(--accent); color: #fff;
+    padding: calc(12px + env(safe-area-inset-top)) 16px 12px; display: flex; align-items: center; gap: 12px;
+  }
+  header.bar h1 { font-size: 17px; margin: 0; flex: 1; }
+  .progress { font-size: 14px; white-space: nowrap; }
+  .progress-track { height: 4px; background: rgba(255,255,255,.3); position: absolute; left: 0; right: 0; bottom: 0; }
+  .progress-fill { height: 100%; background: #ffd27a; width: 0; transition: width .2s; }
+  main { max-width: 760px; margin: 0 auto; padding: 16px; padding-bottom: 110px; }
+  .card { background: var(--card); border-radius: 12px; padding: 16px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+  .meta label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 4px; }
+  .meta .row { margin-bottom: 12px; }
+  .meta .row:last-child { margin-bottom: 0; }
+  input[type=text], input[type=date], select, textarea {
+    width: 100%; font-size: 16px; padding: 10px 12px; border: 1px solid var(--line);
+    border-radius: 8px; background: #fff; color: var(--ink); font-family: inherit;
+  }
+  textarea { resize: vertical; min-height: 80px; }
+  select {
+    -webkit-appearance: none; appearance: none; padding-right: 36px;
+    background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23777' stroke-width='2'/%3E%3C/svg%3E") no-repeat right 12px center;
+  }
+  select.empty { color: #999; }
+  select option { color: var(--ink); }
+  .cat-head {
+    display: flex; justify-content: space-between; align-items: center;
+    font-weight: 700; font-size: 15px; margin-bottom: 8px; color: var(--accent);
+  }
+  .cat-head .count { font-size: 13px; color: var(--muted); font-weight: 400; }
+  .cat-head button { font-size: 12px; padding: 4px 10px; border: 1px solid var(--line); background: #fff; border-radius: 6px; color: var(--ink); }
+  .item { border-top: 1px solid #eee; padding: 10px 0; }
+  .item:first-of-type { border-top: none; }
+  .item-text { font-size: 15px; line-height: 1.5; }
+  .item.yes .item-text { color: var(--muted); }
+  .item-ctrl { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+  .yn {
+    min-width: 72px; padding: 8px 0; font-size: 15px; font-family: inherit; border-radius: 8px;
+    border: 1.5px solid #ccc; background: #fff; color: var(--ink); cursor: pointer;
+  }
+  .item.yes .yn[data-v=yes] { background: var(--ok); border-color: var(--ok); color: #fff; font-weight: 700; }
+  .item.no .yn[data-v=no] { background: var(--ng); border-color: var(--ng); color: #fff; font-weight: 700; }
+  .note-toggle { font-size: 13px; color: var(--accent); background: none; border: none; padding: 8px 4px; cursor: pointer; font-family: inherit; }
+  .photo-btn { margin-left: auto; font-size: 13px; color: var(--accent); padding: 8px 4px; cursor: pointer; }
+  .photo-btn input { display: none; }
+  .photos { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+  .photos:empty { display: none; }
+  .thumb { position: relative; width: 76px; height: 76px; }
+  .thumb img { width: 100%; height: 100%; object-fit: cover; border-radius: 8px; border: 1px solid var(--line); }
+  .thumb button {
+    position: absolute; top: -6px; right: -6px; width: 24px; height: 24px; border-radius: 50%;
+    border: none; background: rgba(0,0,0,.7); color: #fff; font-size: 14px; line-height: 24px; padding: 0; cursor: pointer;
+  }
+  .note { margin: 8px 0 0; display: none; }
+  .note.open { display: block; }
+  .note input { font-size: 15px; padding: 8px 10px; }
+  .ver { text-align: center; font-size: 12px; color: var(--muted); margin: 0; }
+  .actions {
+    position: fixed; bottom: 0; left: 0; right: 0; background: #fff; border-top: 1px solid var(--line);
+    padding: 12px 16px calc(12px + env(safe-area-inset-bottom)); display: flex; gap: 10px; justify-content: center; z-index: 10;
+  }
+  .actions button { font-size: 15px; padding: 12px 14px; white-space: nowrap; border-radius: 10px; border: 1px solid var(--line); background: #fff; color: var(--ink); font-family: inherit; }
+  .actions .primary { background: var(--accent); color: #fff; border-color: var(--accent); flex: 1; max-width: 240px; font-weight: 700; }
+
+  /* ===== 帳票レイアウト（印刷とアプリ内PDF作成で共通） ===== */
+  /* 約物の詰め（text-spacing-trim）は html2canvas が再現できず文字が重なるので無効化 */
+  .sheet { color: #000; font-size: 8pt; background: #fff; font-family: -apple-system, "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif; text-spacing-trim: space-all; }
+  .sheet h2 { text-align: center; font-size: 13pt; font-weight: 400; margin: 0 0 2mm; letter-spacing: .1em; }
+  .sheet .pmeta { width: 75mm; margin-left: auto; font-size: 9pt; }
+  .sheet .pmeta div { display: flex; justify-content: space-between; padding: 1mm 0; }
+  .sheet .pmeta .ul { border-bottom: .3mm solid #000; }
+  .sheet .pmeta .line { border-bottom: .3mm solid #000; margin-bottom: 3mm; }
+  .sheet .pmeta span:first-child { flex: 0 0 18mm; }
+  .sheet .pmeta .val { flex: 1; text-align: center; }
+  .sheet table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+  .sheet th, .sheet td { border: .25mm solid #000; padding: .35mm 1.2mm; line-height: 1.2; vertical-align: middle; }
+  .sheet th { background: #eee; font-weight: 400; text-align: center; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .sheet td.c { text-align: center; white-space: nowrap; padding-left: 0; padding-right: 0; }
+  .sheet td.c span { display: inline; padding: .15mm .7mm; border: .25mm solid transparent; border-radius: 50%; }
+  .sheet td.c span.on { border-color: #000; }
+  .sheet td.n { font-size: 7.5pt; }
+  .sheet .memo { margin-top: 4mm; border-bottom: .3mm solid #000; padding-bottom: 1mm; white-space: pre-wrap; min-height: 6mm; }
+  .sheet .photo-pages { break-before: page; }
+  .sheet .photo-pages h3 { font-size: 11pt; font-weight: 400; margin: 0 0 3mm; border-bottom: .3mm solid #000; padding-bottom: 1mm; }
+  .sheet .pgroup { margin-bottom: 4mm; }
+  .sheet .pgroup h4 { font-size: 8.5pt; font-weight: 400; margin: 0 0 1.5mm; break-after: avoid; }
+  .sheet .pgrid { display: flex; flex-wrap: wrap; gap: 3mm; }
+  .sheet .pgrid figure { margin: 0; width: 92mm; break-inside: avoid; }
+  .sheet .pgrid img { display: block; width: 92mm; height: 66mm; object-fit: contain; border: .2mm solid #999; background: #f7f7f7; }
+  .sheet .pgrid figcaption { font-size: 7.5pt; margin-top: .8mm; }
+  .sheet td .no { display: inline-block; width: 4.2mm; text-align: right; margin-right: 1.2mm; }
+  /* 写真は html2canvas が object-fit 非対応のため背景画像で描く */
+  .sheet .pgrid .ph { width: 92mm; height: 66mm; border: .2mm solid #999; background: #f7f7f7 center / contain no-repeat; }
+
+  #print { display: none; }
+  /* アプリ内PDF作成用の作業領域（画面外） */
+  #pdfwork { position: fixed; left: -10000px; top: 0; }
+  #pdfwork .page { width: 190mm; height: 279mm; overflow: hidden; padding: 0; }
+  @page { size: A4 portrait; margin: 10mm 10mm 8mm; }
+  @media print {
+    body { background: #fff; }
+    header.bar, main, .actions, .overlay, #pdfwork { display: none !important; }
+    #print { display: block; }
+  }
+
+  /* Drive保存用のダイアログ */
+  .overlay { position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 50; display: none; align-items: center; justify-content: center; padding: 16px; }
+  .overlay.open { display: flex; }
+  .dialog { background: #fff; border-radius: 14px; padding: 20px; width: 100%; max-width: 380px; text-align: center; }
+  .dialog p { margin: 0 0 16px; line-height: 1.6; font-size: 15px; }
+  .dialog .hint { font-size: 13px; color: var(--muted); }
+  .dialog .btns { display: flex; gap: 10px; }
+  .dialog button { flex: 1; font-size: 16px; padding: 12px; border-radius: 10px; border: 1px solid var(--line); background: #fff; color: var(--ink); font-family: inherit; }
+  .dialog .primary { background: var(--accent); color: #fff; border-color: var(--accent); font-weight: 700; }
+</style>
+</head>
+<body>
+
+<header class="bar">
+  <h1>設置時検査 チェックリスト</h1>
+  <span class="progress" id="progress">0 / 0</span>
+  <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+</header>
+
+<main>
+  <section class="card meta">
+    <div class="row">
+      <label for="date">日付</label>
+      <input type="date" id="date">
+    </div>
+    <div class="row">
+      <label for="customer">顧客名</label>
+      <input type="text" id="customer" placeholder="顧客名を入力">
+    </div>
+    <div class="row">
+      <label for="inspector">検査責任者</label>
+      <select id="inspector">
+        <option value="">選択してください</option>
+        <option>黒木</option>
+        <option>福盛</option>
+        <option>谷</option>
+        <option>山﨑</option>
+        <option>永友</option>
+        <option>深山</option>
+      </select>
+    </div>
+  </section>
+
+  <div id="list"></div>
+
+  <section class="card meta">
+    <label for="memo">備考メモ</label>
+    <textarea id="memo" placeholder="全体の備考を入力"></textarea>
+  </section>
+
+  <p class="ver">入力内容と写真はこの端末に自動保存されます（「リセット」で消去）</p>
+  <p class="ver">版 v12</p>
+</main>
+
+<div class="actions">
+  <button type="button" id="resetBtn">リセット</button>
+  <button type="button" class="primary" id="pdfBtn">PDFで出力</button>
+  <button type="button" class="primary" id="driveBtn">Driveへ保存</button>
+</div>
+
+<div id="print" class="sheet"></div>
+<div id="pdfwork"></div>
+
+<div class="overlay" id="overlay">
+  <div class="dialog">
+    <p id="dlgMsg"></p>
+    <p class="hint" id="dlgHint"></p>
+    <div class="btns" id="dlgBtns">
+      <button type="button" id="dlgCancel">閉じる</button>
+      <button type="button" class="primary" id="dlgShare">共有メニューを開く</button>
+    </div>
+  </div>
+</div>
+
+<script src="vendor/html2canvas.min.js"></script>
+<script src="vendor/jspdf.umd.min.js"></script>
+
+<script>
+const ITEMS = [
+  ["サウナ本体", "規格直径（φ）は合っているか。"],
+  ["サウナ本体", "規格奥行きは合っているか。"],
+  ["サウナ本体", "オプション窓の仕様は合っているか。"],
+  ["サウナ本体", "オーダーメイド等の特記事項に漏れはないか。"],
+  ["サウナ本体", "窓ガラスに割れ・ヒビはないか。"],
+  ["サウナ本体", "設置部分の基礎は安定しており、耐荷重も問題なさそうか。"],
+  ["サウナ本体", "スペーサー等により、サウナ本体の水平が取れているか。"],
+  ["サウナ本体", "土台・バンドルの本数は合っているか。"],
+  ["サウナ本体", "サウナ本体に、木割れは入っていないか（入っている場合、補修をしたか）。"],
+  ["サウナ本体", "サウナ本体のひじり・歪みはないか。"],
+  ["サウナ本体", "サウナ壁のひじり・歪みはないか。"],
+  ["サウナ本体", "サウナ内外にビスが飛び出している箇所はないか。"],
+  ["サウナ本体", "前後の木口面にコーキングがはみ出してはいないか。"],
+  ["サウナ本体", "壁からの浸水対策（コーキング）は、十分かつ適切か。"],
+  ["サウナ本体", "バンドルの締め上げは十分にされているか。"],
+  ["サウナ本体", "すのこ・ベンチに不具合や釘の飛び出しはないか。"],
+  ["サウナ本体", "各ベンチ・すのこは、水平がとれているか。"],
+  ["サウナ本体", "各ベンチは、ビスで適切に固定されているか。"],
+  ["サウナ本体", "各すのこは、ゴム足が適切な場所・数がついているか。"],
+  ["サウナ本体", "換気口・Rink SAUNAプレートは適切に設置されているか。"],
+  ["建具・壁", "戸あたりクッション（コーナーガード）は適切についているか。"],
+  ["建具・壁", "内取手の金具は、戸あたりと干渉せず、十分な距離があるか。"],
+  ["建具・壁", "建具の上下・左右は十分な余白（遊び）が適切に確保されているか。"],
+  ["建具・壁", "建具の建て付けは良好で、スムーズに開閉するか。"],
+  ["建具・壁", "戸当たり部分の木材に曲がりはないか。"],
+  ["建具・壁", "蝶番は、適正位置にビスで固定されているか。"],
+  ["屋根施工", "雨逃し・ルーフィング・シングルの施工は適切に行われたか。"],
+  ["屋根施工", "屋根部分：小口面やその付近からの雨漏り対策は十分に施行されているか。"],
+  ["屋根施工", "Aシングルは、均等な幅で、真っ直ぐに施工されているか。"],
+  ["屋根施工", "Aシングル釘が見えている箇所はないか。"],
+  ["屋根施工", "屋根の棟は、十分な防水施工がなされているか。"],
+  ["屋根施工", "煙突がある場合：煙突部やその周囲からの雨漏り対策は十分か。"],
+  ["塗装", "塗装の剥がれ・こすれは起きていないか。リタッチペイントしているか。"],
+  ["塗装", "穴を開けた部分にも十分に塗装を施し、パテが入っているか。"],
+  ["塗装", "無塗装部分に塗装が付着していないか。"],
+  ["熱源・照明", "熱源（電気・ガス・薪）は、仕様と合っているか。"],
+  ["熱源・照明", "据え置いた熱源は、適切な長さのビスで固定したか。"],
+  ["熱源・照明", "据え置いた熱源（電気・ガス）の温度センサー、パネルは適切に施工したか。"],
+  ["熱源・照明", "照明（内灯・外灯）、遮熱板は、適切な位置に施工されているか。"],
+  ["熱源・照明", "ヒーターガードが必要な場合：適切な位置に施工されているか。"],
+  ["清掃・片付け", "掃除機をかけた上、サウナ室内にビス、ゴミ、木クズ等はないか。"],
+  ["清掃・片付け", "窓ガラスはウエスで拭き上げ、汚れやホコリが付いていないか。"],
+  ["清掃・片付け", "施工箇所の周囲に、残工具・ビス・釘・カッター刃・ゴミ等は落ちていないか。"],
+  ["清掃・片付け", "廃材は全て持ち帰っているか。"],
+  ["清掃・片付け", "スパナ・メンテナンスマニュアル・熱源の箱・説明書などは置いているか。"],
+  ["施工撮影", "施工前（基礎のみ）画像"],
+  ["施工撮影", "据え置いた熱源（電気・ガス・薪）のシリアル番号と箱を写真を撮ったか。"],
+  ["施工撮影", "広角写真（前面・背面・左右側面・斜め・施設全体・眺望など）"],
+  ["施工撮影", "細部写真（サウナ室内・建具・熱源・ベンチ・オプション窓など）"],
+  ["施工撮影", "画像・動画（SNS用、HP事例記事）、組立シーン"],
+  ["メンテナンス", "メンテナンス方法の説明は行ったか。"],
+];
+
+const state = ITEMS.map(() => ({ answer: null, note: "", photos: [] }));
+const $ = (id) => document.getElementById(id);
+const esc = (s) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+function todayISO() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+function render() {
+  const groups = [];
+  ITEMS.forEach(([cat, text], i) => {
+    let g = groups.find((x) => x.cat === cat);
+    if (!g) groups.push((g = { cat, idx: [] }));
+    g.idx.push(i);
+  });
+  $("list").innerHTML = groups.map((g) => `
+    <section class="card" data-cat="${esc(g.cat)}">
+      <div class="cat-head">
+        <span>${esc(g.cat)} <span class="count" data-count></span></span>
+        <button type="button" data-all>すべて「はい」</button>
+      </div>
+      ${g.idx.map((i) => `
+        <div class="item" data-i="${i}">
+          <div class="item-text">${esc(ITEMS[i][1])}</div>
+          <div class="item-ctrl">
+            <button type="button" class="yn" data-v="yes">はい</button>
+            <button type="button" class="yn" data-v="no">いいえ</button>
+            <label class="photo-btn">📷 写真<input type="file" accept="image/*" multiple></label>
+            <button type="button" class="note-toggle">＋ 備考</button>
+          </div>
+          <div class="note"><input type="text" placeholder="備考を入力"></div>
+          <div class="photos"></div>
+        </div>`).join("")}
+    </section>`).join("");
+
+  document.querySelectorAll(".item").forEach((el) => {
+    const i = +el.dataset.i;
+    const note = el.querySelector(".note");
+    const noteInput = note.querySelector("input");
+    const toggle = el.querySelector(".note-toggle");
+    el.querySelectorAll(".yn").forEach((b) => b.addEventListener("click", () => {
+      // 同じボタンをもう一度押すと未回答に戻す
+      state[i].answer = state[i].answer === b.dataset.v ? null : b.dataset.v;
+      if (state[i].answer === "no" && !note.classList.contains("open")) note.classList.add("open");
+      update();
+    }));
+    toggle.addEventListener("click", () => {
+      note.classList.toggle("open");
+      if (note.classList.contains("open")) noteInput.focus();
+    });
+    const fileInput = el.querySelector(".photo-btn input");
+    fileInput.addEventListener("change", async () => {
+      for (const f of fileInput.files) {
+        try { state[i].photos.push(await shrink(f)); } catch (e) { alert("画像を読み込めませんでした：" + f.name); }
+      }
+      fileInput.value = "";
+      renderPhotos(el, i);
+      savePhotos(i);
+    });
+    noteInput.addEventListener("input", () => {
+      state[i].note = noteInput.value;
+      toggle.textContent = noteInput.value ? "✎ 備考あり" : "＋ 備考";
+    });
+  });
+
+  document.querySelectorAll("[data-all]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const sec = btn.closest("section");
+      const idx = [...sec.querySelectorAll(".item")].map((e) => +e.dataset.i);
+      const allYes = idx.every((i) => state[i].answer === "yes");
+      idx.forEach((i) => { state[i].answer = allYes ? null : "yes"; });
+      update();
+    });
+  });
+}
+
+function update() {
+  document.querySelectorAll(".item").forEach((el) => {
+    const a = state[+el.dataset.i].answer;
+    el.classList.toggle("yes", a === "yes");
+    el.classList.toggle("no", a === "no");
+  });
+  document.querySelectorAll("section[data-cat]").forEach((sec) => {
+    const idx = [...sec.querySelectorAll(".item")].map((e) => +e.dataset.i);
+    const done = idx.filter((i) => state[i].answer).length;
+    const allYes = idx.every((i) => state[i].answer === "yes");
+    sec.querySelector("[data-count]").textContent = `${done}/${idx.length}`;
+    sec.querySelector("[data-all]").textContent = allYes ? "すべて解除" : "すべて「はい」";
+  });
+  const done = state.filter((s) => s.answer).length;
+  $("progress").textContent = `${done} / ${ITEMS.length}`;
+  $("progressFill").style.width = `${(done / ITEMS.length) * 100}%`;
+  saveText();
+}
+
+// 写真は長辺1600pxに縮小してメモリとPDFサイズを抑える
+function shrink(file, max = 1600) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      const r = Math.min(1, max / Math.max(img.width, img.height));
+      const c = document.createElement("canvas");
+      c.width = Math.round(img.width * r);
+      c.height = Math.round(img.height * r);
+      c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(url);
+      resolve(c.toDataURL("image/jpeg", 0.85));
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(); };
+    img.src = url;
+  });
+}
+
+function renderPhotos(el, i) {
+  const box = el.querySelector(".photos");
+  box.innerHTML = state[i].photos.map((src, k) => `
+    <div class="thumb"><img src="${src}" alt=""><button type="button" data-k="${k}" aria-label="削除">×</button></div>`).join("");
+  box.querySelectorAll("button").forEach((b) => b.addEventListener("click", () => {
+    state[i].photos.splice(+b.dataset.k, 1);
+    renderPhotos(el, i);
+    savePhotos(i);
+  }));
+  const n = state[i].photos.length;
+  el.querySelector(".photo-btn").firstChild.textContent = n ? `📷 写真(${n})` : "📷 写真";
+}
+
+function photoPages() {
+  const groups = ITEMS.map(([cat, text], i) => ({ cat, text, i, photos: state[i].photos })).filter((g) => g.photos.length);
+  if (!groups.length) return "";
+  return `<div class="photo-pages">
+    <h3>添付写真</h3>
+    ${groups.map((g) => `
+      <div class="pgroup">
+        <h4>${g.i + 1}．【${esc(g.cat)}】${esc(g.text)}</h4>
+        <div class="pgrid">${g.photos.map((src, k) => `<figure><img src="${src}" alt=""><figcaption>写真 ${g.i + 1}-${k + 1}</figcaption></figure>`).join("")}</div>
+      </div>`).join("")}
+  </div>`;
+}
+
+function buildPrint() {
+  $("print").innerHTML = sheetHead() + photoPages();
+}
+
+function sheetHead() {
+  const d = $("date").value;
+  let y = "", m = "", day = "";
+  if (d) { [y, m, day] = d.split("-"); m = String(+m); day = String(+day); }
+  return `
+    <h2>設置時検査　チェックリスト</h2>
+    <div class="pmeta">
+      <div><span>日付</span><span class="val">${esc(y)} 年　${esc(m)} 月　${esc(day)} 日</span></div>
+      <div class="ul"><span>顧客名</span><span class="val">${esc($("customer").value)}</span></div>
+      <div class="line"><span>検査責任者</span><span class="val">${esc($("inspector").value)}</span></div>
+    </div>
+    <table>
+      <colgroup><col style="width:13.5%"><col style="width:55%"><col style="width:11%"><col style="width:20.5%"></colgroup>
+      <thead><tr><th>分類</th><th>項目</th><th>チェック</th><th>備考</th></tr></thead>
+      <tbody>
+        ${ITEMS.map(([cat, text], i) => `
+          <tr><td><span class="no">${i + 1}</span>${esc(cat)}</td><td>${esc(text)}</td>
+          <td class="c"><span class="${state[i].answer === "yes" ? "on" : ""}">はい</span>・<span class="${state[i].answer === "no" ? "on" : ""}">いいえ</span></td>
+          <td class="n">${esc(state[i].note)}${state[i].photos.length ? `${state[i].note ? " " : ""}（写真${state[i].photos.length}枚）` : ""}</td></tr>`).join("")}
+      </tbody>
+    </table>
+    <div class="memo">備考メモ　${esc($("memo").value)}</div>`;
+}
+
+function preflight() {
+  const remaining = ITEMS.length - state.filter((s) => s.answer).length;
+  if (!$("inspector").value.trim() && !confirm("検査責任者が未選択です。このまま出力しますか？")) return false;
+  if (remaining > 0 && !confirm(`未回答の項目が ${remaining} 件あります。このまま出力しますか？`)) return false;
+  return true;
+}
+
+function fileBaseName() {
+  const d = $("date").value || todayISO();
+  const name = $("customer").value.trim();
+  return `設置時検査チェックリスト_${d}${name ? "_" + name : ""}`;
+}
+
+$("pdfBtn").addEventListener("click", () => {
+  if (!preflight()) return;
+  buildPrint();
+  const prev = document.title;
+  document.title = fileBaseName();
+  window.print();
+  setTimeout(() => { document.title = prev; }, 1000);
+});
+
+
+// ===== Google Drive へ保存（共有メニュー経由） =====
+// 印刷を使わずアプリ内で PDF を作り、OS の共有メニューに渡す。
+// 共有はタップ直後でないと拒否されるため、作成後にもう一度ボタンを押してもらう。
+const PAGE_H = 279; // A4 297mm − 上下余白 18mm
+
+// 添付写真を A4 ページ単位に割り付ける（見出しは最初の段と同じページに置く）
+function photoSheets() {
+  const pages = [];
+  let html = "", h = 0;
+  const newPage = () => {
+    if (html) pages.push(html);
+    html = `<div class="photo-pages"><h3>添付写真</h3>`;
+    h = 10;
+  };
+  newPage();
+  ITEMS.forEach(([cat, text], i) => {
+    const photos = state[i].photos;
+    for (let k = 0; k < photos.length; k += 2) {
+      const head = k === 0 || h === 10;
+      const need = (head ? 10 : 0) + 74;
+      if (h + need > PAGE_H) { html += "</div>"; newPage(); }
+      if (k === 0 || h === 10) {
+        html += `<div class="pgroup" style="margin-bottom:0;margin-top:${h === 10 ? 0 : 4}mm"><h4>${i + 1}．【${esc(cat)}】${esc(text)}${k ? "（続き）" : ""}</h4></div>`;
+        h += 10;
+      }
+      html += `<div class="pgrid" style="margin-bottom:3mm">${photos.slice(k, k + 2).map((src, j) =>
+        `<figure><div class="ph" style="background-image:url('${src}')"></div><figcaption>写真 ${i + 1}-${k + j + 1}</figcaption></figure>`).join("")}</div>`;
+      h += 74;
+    }
+  });
+  html += "</div>";
+  if (h > 10) pages.push(html);
+  return pages;
+}
+
+async function makePdf() {
+  const work = $("pdfwork");
+  const pages = [sheetHead(), ...photoSheets()];
+  work.innerHTML = pages.map((p) => `<div class="page sheet">${p}</div>`).join("");
+  const pdf = new window.jspdf.jsPDF({ unit: "mm", format: "a4", compress: true });
+  const els = [...work.querySelectorAll(".page")];
+  for (let n = 0; n < els.length; n++) {
+    $("dlgMsg").textContent = `PDFを作成しています…（${n + 1} / ${els.length} ページ）`;
+    const canvas = await html2canvas(els[n], { scale: 2.5, backgroundColor: "#ffffff", logging: false });
+    if (n) pdf.addPage();
+    pdf.addImage(canvas.toDataURL("image/jpeg", 0.9), "JPEG", 10, 10, 190, PAGE_H);
+  }
+  work.innerHTML = "";
+  return new File([pdf.output("blob")], `${fileBaseName()}.pdf`, { type: "application/pdf" });
+}
+
+let pdfFile = null;
+const dlg = (msg, hint, showBtns, shareLabel) => {
+  $("overlay").classList.add("open");
+  $("dlgMsg").textContent = msg;
+  $("dlgHint").textContent = hint || "";
+  $("dlgBtns").style.display = showBtns ? "flex" : "none";
+  $("dlgShare").style.display = shareLabel ? "" : "none";
+  if (shareLabel) $("dlgShare").textContent = shareLabel;
+};
+const canShareFile = (f) => !!(navigator.canShare && navigator.canShare({ files: [f] }));
+
+$("driveBtn").addEventListener("click", async () => {
+  if (!preflight()) return;
+  dlg("PDFを作成しています…", "写真が多いと少し時間がかかります", false);
+  try {
+    pdfFile = await makePdf();
+  } catch (e) {
+    $("pdfwork").innerHTML = "";
+    dlg("PDFを作成できませんでした。", String(e && e.message || e), true);
+    return;
+  }
+  if (canShareFile(pdfFile)) {
+    dlg("PDFの準備ができました。", "共有メニューで「ドライブ」（Google Drive）を選ぶと保存できます", true, "共有メニューを開く");
+  } else {
+    dlg("この端末では共有メニューが使えません。", "PDFをダウンロードして、Google Drive にアップロードしてください", true, "ダウンロード");
+  }
+});
+
+$("dlgShare").addEventListener("click", async () => {
+  if (!pdfFile) return;
+  if (canShareFile(pdfFile)) {
+    try {
+      await navigator.share({ files: [pdfFile], title: pdfFile.name });
+      $("overlay").classList.remove("open");
+    } catch (e) {
+      if (e.name !== "AbortError") dlg("共有できませんでした。", String(e.message || e), true, "もう一度試す");
+    }
+  } else {
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(pdfFile);
+    a.download = pdfFile.name;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 10000);
+    $("overlay").classList.remove("open");
+  }
+});
+
+$("dlgCancel").addEventListener("click", () => $("overlay").classList.remove("open"));
+
+
+// ===== 自動保存 =====
+// 文字の入力は localStorage、写真は容量が大きいので IndexedDB に保存する
+const LS_KEY = "setchi-kensa-v1";
+let restoring = true;
+
+function saveText() {
+  if (restoring) return;
+  try {
+    localStorage.setItem(LS_KEY, JSON.stringify({
+      date: $("date").value,
+      customer: $("customer").value,
+      inspector: $("inspector").value,
+      memo: $("memo").value,
+      items: state.map((s) => ({ answer: s.answer, note: s.note })),
+    }));
+  } catch (e) { /* 保存できない環境では何もしない */ }
+}
+
+function openDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open("setchi-kensa", 1);
+    req.onupgradeneeded = () => req.result.createObjectStore("photos");
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function savePhotos(i) {
+  try {
+    const db = await openDB();
+    const tx = db.transaction("photos", "readwrite");
+    if (state[i].photos.length) tx.objectStore("photos").put(state[i].photos, i);
+    else tx.objectStore("photos").delete(i);
+  } catch (e) {
+    alert("写真をこの端末に保存できませんでした（容量不足の可能性があります）。PDF出力はそのまま可能です。");
+  }
+}
+
+async function restore() {
+  let saved = null;
+  try { saved = JSON.parse(localStorage.getItem(LS_KEY) || "null"); } catch (e) {}
+  if (saved) {
+    for (const k of ["date", "customer", "inspector", "memo"]) if (saved[k] != null) $(k).value = saved[k];
+    syncInsp();
+    (saved.items || []).forEach((it, i) => {
+      if (!state[i]) return;
+      state[i].answer = it.answer || null;
+      state[i].note = it.note || "";
+    });
+    document.querySelectorAll(".item").forEach((el) => {
+      const i = +el.dataset.i;
+      if (!state[i].note) return;
+      el.querySelector(".note input").value = state[i].note;
+      el.querySelector(".note").classList.add("open");
+      el.querySelector(".note-toggle").textContent = "✎ 備考あり";
+    });
+  }
+  try {
+    const db = await openDB();
+    await Promise.all(state.map((s, i) => new Promise((resolve) => {
+      const req = db.transaction("photos").objectStore("photos").get(i);
+      req.onsuccess = () => {
+        if (Array.isArray(req.result) && req.result.length) {
+          s.photos = req.result;
+          const el = document.querySelector(`.item[data-i="${i}"]`);
+          renderPhotos(el, i);
+        }
+        resolve();
+      };
+      req.onerror = () => resolve();
+    })));
+  } catch (e) {}
+}
+
+async function clearSaved() {
+  try { localStorage.removeItem(LS_KEY); } catch (e) {}
+  try {
+    const db = await openDB();
+    await new Promise((resolve) => {
+      const tx = db.transaction("photos", "readwrite");
+      tx.objectStore("photos").clear();
+      tx.oncomplete = tx.onerror = resolve;
+    });
+  } catch (e) {}
+}
+
+$("resetBtn").addEventListener("click", () => {
+  if (!confirm("入力内容をすべて消去します。よろしいですか？")) return;
+  clearSaved().finally(() => location.reload());
+});
+
+window.addEventListener("beforeprint", buildPrint);
+
+$("date").value = todayISO();
+const insp = $("inspector");
+const syncInsp = () => insp.classList.toggle("empty", !insp.value);
+insp.addEventListener("change", syncInsp);
+syncInsp();
+render();
+restore().finally(() => {
+  restoring = false;
+  update();
+  // 備考・日付・顧客名などの入力も都度保存
+  document.addEventListener("input", saveText);
+  document.addEventListener("change", saveText);
+});
+</script>
+</body>
+</html>

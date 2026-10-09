@@ -141,6 +141,13 @@
   .dialog .btns { display: flex; gap: 10px; }
   .dialog button { flex: 1; font-size: 16px; padding: 12px; border-radius: 10px; border: 1px solid var(--line); background: #fff; color: var(--ink); font-family: inherit; }
   .dialog .primary { background: var(--accent); color: #fff; border-color: var(--accent); font-weight: 700; }
+  /* 未回答の警告 */
+  .item.missing { background: #fff3f0; border-left: 4px solid #d33; padding-left: 8px; }
+  .item.missing .item-text::before { content: "未回答　"; color: #d33; font-weight: 700; font-size: 12px; }
+  .dialog.warn { text-align: left; }
+  .dialog.warn h2 { margin: 0 0 8px; font-size: 17px; color: #d33; }
+  .dialog.warn .miss-list { max-height: 42vh; overflow: auto; margin: 0 0 14px; padding: 8px 10px 8px 28px; background: #fff3f0; border-radius: 8px; font-size: 14px; line-height: 1.6; }
+  .dialog.warn .miss-list li { margin-bottom: 4px; }
 </style>
 </head>
 <body>
@@ -194,6 +201,18 @@
 
 <div id="print" class="sheet"></div>
 <div id="pdfwork"></div>
+
+<div class="overlay" id="warnOverlay">
+  <div class="dialog warn">
+    <h2 id="warnTitle">未回答があります</h2>
+    <p class="hint" id="warnSub"></p>
+    <ol class="miss-list" id="warnList"></ol>
+    <div class="btns">
+      <button type="button" class="primary" id="warnFix">未回答を入力する</button>
+      <button type="button" id="warnGo">このまま出力</button>
+    </div>
+  </div>
+</div>
 
 <div class="overlay" id="overlay">
   <div class="dialog">
@@ -346,6 +365,7 @@ function update() {
     const a = state[+el.dataset.i].answer;
     el.classList.toggle("yes", a === "yes");
     el.classList.toggle("no", a === "no");
+    if (a) el.classList.remove("missing");
   });
   document.querySelectorAll("section[data-cat]").forEach((sec) => {
     const idx = [...sec.querySelectorAll(".item")].map((e) => +e.dataset.i);
@@ -434,11 +454,31 @@ function sheetHead() {
     <div class="memo">備考メモ　${esc($("memo").value)}</div>`;
 }
 
+// 出力前のチェック。未回答や検査責任者の未選択があれば画面で知らせ、入力するか・そのまま出すかを選ばせる
 function preflight() {
-  const remaining = ITEMS.length - state.filter((s) => s.answer).length;
-  if (!$("inspector").value.trim() && !confirm("検査責任者が未選択です。このまま出力しますか？")) return false;
-  if (remaining > 0 && !confirm(`未回答の項目が ${remaining} 件あります。このまま出力しますか？`)) return false;
-  return true;
+  const missing = ITEMS.map((_, i) => i).filter((i) => !state[i].answer);
+  const noInspector = !$("inspector").value.trim();
+  if (!missing.length && !noInspector) return Promise.resolve(true);
+  document.querySelectorAll(".item").forEach((el) => el.classList.toggle("missing", missing.includes(+el.dataset.i)));
+  $("warnTitle").textContent = missing.length ? `「はい・いいえ」が未回答の項目が ${missing.length} 件あります` : "検査責任者が未選択です";
+  $("warnSub").textContent = noInspector && missing.length ? "※ 検査責任者も未選択です" : "";
+  $("warnList").innerHTML = missing.map((i) => `<li>${esc(ITEMS[i][0])}：${esc(ITEMS[i][1])}</li>`).join("");
+  $("warnList").style.display = missing.length ? "" : "none";
+  $("warnFix").textContent = missing.length ? "未回答を入力する" : "選択する";
+  $("warnOverlay").classList.add("open");
+  return new Promise((resolve) => {
+    const done = (ok) => {
+      $("warnOverlay").classList.remove("open");
+      $("warnFix").onclick = $("warnGo").onclick = null;
+      if (!ok) {
+        const target = missing.length ? document.querySelector(`.item[data-i="${missing[0]}"]`) : $("inspector");
+        if (target) target.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+      resolve(ok);
+    };
+    $("warnFix").onclick = () => done(false);
+    $("warnGo").onclick = () => done(true);
+  });
 }
 
 function fileBaseName() {
@@ -516,7 +556,7 @@ const dlg = (msg, hint, showBtns, shareLabel) => {
 const canShareFile = (f) => !!(navigator.canShare && navigator.canShare({ files: [f] }));
 
 $("driveBtn").addEventListener("click", async () => {
-  if (!preflight()) return;
+  if (!(await preflight())) return;
   dlg("PDFを作成しています…", "写真が多いと少し時間がかかります", false);
   try {
     pdfFile = await makePdf();
@@ -533,7 +573,7 @@ $("driveBtn").addEventListener("click", async () => {
 });
 
 $("pdfBtn").addEventListener("click", async () => {
-  if (!preflight()) return;
+  if (!(await preflight())) return;
   dlg("PDFを作成しています…", "写真が多いと少し時間がかかります", false);
   try {
     pdfFile = await makePdf();

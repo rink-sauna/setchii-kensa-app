@@ -112,6 +112,7 @@
   .sheet .photo-pages h3 { font-size: 11pt; font-weight: 400; margin: 0 0 3mm; border-bottom: .3mm solid #000; padding-bottom: 1mm; }
   .sheet .pgroup { margin-bottom: 4mm; }
   .sheet .pgroup h4 { font-size: 8.5pt; font-weight: 400; margin: 0 0 1.5mm; break-after: avoid; }
+  .sheet .pnote { font-size: 8pt; margin: 0 0 1.5mm; white-space: pre-wrap; }
   .sheet .pgrid { display: flex; flex-wrap: wrap; gap: 3mm; }
   .sheet .pgrid figure { margin: 0; width: 92mm; break-inside: avoid; }
   .sheet .pgrid img { display: block; width: 92mm; height: 66mm; object-fit: contain; border: .2mm solid #999; background: #f7f7f7; }
@@ -399,6 +400,7 @@ function photoPages() {
     ${groups.map((g) => `
       <div class="pgroup">
         <h4>${g.i + 1}．【${esc(g.cat)}】${esc(g.text)}</h4>
+        ${state[g.i].note.trim() ? `<div class="pnote">備考：${esc(state[g.i].note)}</div>` : ""}
         <div class="pgrid">${g.photos.map((src, k) => `<figure><img src="${src}" alt=""><figcaption>写真 ${g.i + 1}-${k + 1}</figcaption></figure>`).join("")}</div>
       </div>`).join("")}
   </div>`;
@@ -466,13 +468,15 @@ function photoSheets() {
   newPage();
   ITEMS.forEach(([cat, text], i) => {
     const photos = state[i].photos;
+    const note = state[i].note.trim();
+    const noteH = note ? note.split("\n").reduce((a, l) => a + Math.max(1, Math.ceil(l.length / 55)), 0) * 3.8 + 2 : 0;
     for (let k = 0; k < photos.length; k += 2) {
       const head = k === 0 || h === 10;
-      const need = (head ? 10 : 0) + 74;
+      const need = (head ? 10 + (k === 0 ? noteH : 0) : 0) + 74;
       if (h + need > PAGE_H) { html += "</div>"; newPage(); }
       if (k === 0 || h === 10) {
-        html += `<div class="pgroup" style="margin-bottom:0;margin-top:${h === 10 ? 0 : 4}mm"><h4>${i + 1}．【${esc(cat)}】${esc(text)}${k ? "（続き）" : ""}</h4></div>`;
-        h += 10;
+        html += `<div class="pgroup" style="margin-bottom:0;margin-top:${h === 10 ? 0 : 4}mm"><h4>${i + 1}．【${esc(cat)}】${esc(text)}${k ? "（続き）" : ""}</h4>${k === 0 && note ? `<div class="pnote">備考：${esc(note)}</div>` : ""}</div>`;
+        h += 10 + (k === 0 ? noteH : 0);
       }
       html += `<div class="pgrid" style="margin-bottom:3mm">${photos.slice(k, k + 2).map((src, j) =>
         `<figure><div class="ph" style="background-image:url('${src}')"></div><figcaption>写真 ${i + 1}-${k + j + 1}</figcaption></figure>`).join("")}</div>`;

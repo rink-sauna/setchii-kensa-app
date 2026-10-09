@@ -445,14 +445,8 @@ function fileBaseName() {
   return `設置時検査チェックリスト_${d}${name ? "_" + name : ""}`;
 }
 
-$("pdfBtn").addEventListener("click", () => {
-  if (!preflight()) return;
-  buildPrint();
-  const prev = document.title;
-  document.title = fileBaseName();
-  window.print();
-  setTimeout(() => { document.title = prev; }, 1000);
-});
+// PDFで出力：印刷ダイアログではなく、アプリ内でPDFを作ってそのままダウンロードする（pdfBtnの処理は下方のdriveBtn周辺に定義）
+
 
 
 // ===== Google Drive へ保存（共有メニュー経由） =====
@@ -532,6 +526,26 @@ $("driveBtn").addEventListener("click", async () => {
   } else {
     dlg("この端末では共有メニューが使えません。", "PDFをダウンロードして、Google Drive にアップロードしてください", true, "ダウンロード");
   }
+});
+
+$("pdfBtn").addEventListener("click", async () => {
+  if (!preflight()) return;
+  dlg("PDFを作成しています…", "写真が多いと少し時間がかかります", false);
+  try {
+    pdfFile = await makePdf();
+  } catch (e) {
+    $("pdfwork").innerHTML = "";
+    dlg("PDFを作成できませんでした。", String(e && e.message || e), true);
+    return;
+  }
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(pdfFile);
+  a.download = pdfFile.name;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 10000);
+  $("overlay").classList.remove("open");
 });
 
 $("dlgShare").addEventListener("click", async () => {
